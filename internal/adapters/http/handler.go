@@ -1,23 +1,25 @@
 package http
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 
 	"go.dataflow.ru/service-sales/internal/app/domain"
-	"go.dataflow.ru/service-sales/internal/app/services"
+	"go.dataflow.ru/service-sales/internal/app/ports"
 )
 
+// SalesHandler обработчик продаж.
 type SalesHandler struct {
-	SaleService *services.SaleService
+	salesService ports.SalesService
 }
 
-func NewSalesHandler(service *services.SaleService) *SalesHandler {
-	return &SalesHandler{SaleService: service}
+// New возвращает новый экземпляр обработчика.
+func New(service ports.SalesService) *SalesHandler {
+	return &SalesHandler{salesService: service}
 }
 
+// AddSale обрабатывает запрос на добавление новой продажи.
 func (h *SalesHandler) AddSale(c *fiber.Ctx) error {
 	var req SaleDto
 
@@ -30,25 +32,24 @@ func (h *SalesHandler) AddSale(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	err = h.SaleService.AddSale(convertFromDto(req))
+	err = h.salesService.AddSale(convertFromDto(req))
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	return nil
+	return c.JSON(AddSaleResponse{Status: "success"})
 }
 
+// GetSales обрабатывает запрос получения списка всех продаж.
 func (h *SalesHandler) GetSales(c *fiber.Ctx) error {
-	sales, err := h.SaleService.GetSales()
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
+	sales := h.salesService.GetSales()
 
 	return c.JSON(sales)
 }
 
-func (h *SalesHandler) CalculateTotalSales(c *fiber.Ctx) error {
-	var req TotalSalesRequest
+// CalculateTotalSum обрабатывает запрос на расчет суммы продаж для заданного магазина за период.
+func (h *SalesHandler) CalculateTotalSum(c *fiber.Ctx) error {
+	var req CalculateTotalSumRequest
 
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -59,6 +60,9 @@ func (h *SalesHandler) CalculateTotalSales(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
+	if req.StartDate == "" && req.EndDate == "" {
+
+	}
 	startDate, err := time.Parse(time.RFC3339, req.StartDate)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -69,24 +73,19 @@ func (h *SalesHandler) CalculateTotalSales(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	totalSales, err := h.SaleService.GetTotal(req.StoreID, startDate, endDate)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
+	totalSales := h.salesService.GetTotalSum(req.StoreID, startDate, endDate)
 
-	response := map[string]interface{}{
-		"store_id":    request.StoreID,
-		"total_sales": totalSales,
-		"start_date":  request.StartDate,
-		"end_date":    request.EndDate,
-	}
-	json.NewEncoder(w).Encode(response)
-
-	return
+	return c.JSON(CalculateTotalSumResponse{
+		StoreID:    req.StoreID,
+		TotalSales: totalSales,
+		StartDate:  req.StartDate,
+		EndDate:    req.EndDate,
+	})
 }
 
 func convertFromDto(s SaleDto) *domain.Sale {
 	dt, _ := time.Parse(time.RFC3339, s.SaleDate)
+
 	return &domain.Sale{
 		ProductID:    s.ProductID,
 		StoreID:      s.StoreID,

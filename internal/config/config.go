@@ -16,7 +16,7 @@ type Server struct {
 
 // Read reads config.
 func Read() (Config, error) {
-	conf := Config{}
+	var conf Config
 	if err := env.Parse(&conf); err != nil {
 		return Config{}, fmt.Errorf("parse config from env: %w", err)
 	}

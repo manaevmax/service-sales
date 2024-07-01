@@ -31,15 +31,6 @@ func NewLogger(level string) *Logger {
 	return &Logger{l.Sugar()}
 }
 
-func (l *Logger) Printf(format string, args ...any) {
-	l.With()
-	l.Infof(format, args...)
-}
-
-func (l *Logger) With(args ...any) *Logger {
-	return &Logger{l.SugaredLogger.With(args...)}
-}
-
 func NoOpLogger() *Logger {
 	return &Logger{zap.NewNop().Sugar()}
 }

@@ -37,13 +37,28 @@ func (r *SaleDto) Validate() error {
 	return nil
 }
 
-type TotalSalesRequest struct {
+type AddSaleResponse struct {
+	Status string `json:"status"`
+}
+
+type CalculateTotalSumRequest struct {
 	Operation string `json:"operation"`
 	StoreID   string `json:"store_id"`
 	StartDate string `json:"start_date"`
 	EndDate   string `json:"end_date"`
 }
 
-func (r *TotalSalesRequest) Validate() error {
+func (r *CalculateTotalSumRequest) Validate() error {
+	if r.Operation != "total_sales" {
+		return fmt.Errorf("unknown operation")
+	}
+
 	return nil
+}
+
+type CalculateTotalSumResponse struct {
+	StoreID    string  `json:"store_id"`
+	TotalSales float64 `json:"total_sales"`
+	StartDate  string  `json:"start_date"`
+	EndDate    string  `json:"end_date"`
 }
