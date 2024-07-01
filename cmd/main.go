@@ -17,9 +17,8 @@ import (
 )
 
 const (
-	shutdownTimeout = 1 * time.Second
-	readTimeout     = 1 * time.Second
-	writeTimeout    = 1 * time.Second
+	readTimeout  = 1 * time.Second
+	writeTimeout = 1 * time.Second
 )
 
 func main() {
@@ -37,9 +36,12 @@ func main() {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
+
 	go func() {
-		_ = <-c
-		fmt.Println("Gracefully shutting down...")
+		<-c
+
+		logger.Info("Gracefully shutting down...")
+
 		_ = srv.Shutdown()
 	}()
 

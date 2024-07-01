@@ -3,14 +3,16 @@ package http
 import (
 	"fmt"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type SaleDto struct {
-	ProductID    string  `json:"product_id"`
-	StoreID      string  `json:"store_id"`
-	QuantitySold int64   `json:"quantity_sold"`
-	SalePrice    float64 `json:"sale_price"`
-	SaleDate     string  `json:"sale_date"`
+	ProductID    string          `json:"product_id"`
+	StoreID      string          `json:"store_id"`
+	QuantitySold int64           `json:"quantity_sold"`
+	SalePrice    decimal.Decimal `json:"sale_price"`
+	SaleDate     string          `json:"sale_date"`
 }
 
 func (r *SaleDto) Validate() error {
@@ -26,7 +28,7 @@ func (r *SaleDto) Validate() error {
 		return fmt.Errorf("quantity must be positive")
 	}
 
-	if r.SalePrice <= 0 {
+	if r.SalePrice.IsNegative() {
 		return fmt.Errorf("price must be positive")
 	}
 
@@ -57,8 +59,8 @@ func (r *CalculateTotalSumRequest) Validate() error {
 }
 
 type CalculateTotalSumResponse struct {
-	StoreID    string  `json:"store_id"`
-	TotalSales float64 `json:"total_sales"`
-	StartDate  string  `json:"start_date"`
-	EndDate    string  `json:"end_date"`
+	StoreID    string          `json:"store_id"`
+	TotalSales decimal.Decimal `json:"total_sales"`
+	StartDate  string          `json:"start_date"`
+	EndDate    string          `json:"end_date"`
 }

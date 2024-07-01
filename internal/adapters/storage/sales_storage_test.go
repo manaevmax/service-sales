@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 
 	"go.dataflow.ru/service-sales/internal/app/domain"
@@ -23,7 +24,7 @@ func TestSalesStorage_GetTotal(t *testing.T) {
 			StoreID:      "store_1",
 			ProductID:    fmt.Sprintf("product_%d", i),
 			QuantitySold: 1,
-			SalePrice:    float64(1 + i),
+			SalePrice:    decimal.NewFromFloat(1 + float64(i)),
 			SaleDate:     dt.AddDate(0, 0, i),
 		})
 	}
@@ -32,85 +33,85 @@ func TestSalesStorage_GetTotal(t *testing.T) {
 		name     string
 		dateFrom time.Time
 		dateTo   time.Time
-		expSum   float64
+		expSum   decimal.Decimal
 	}{
 		{
 			name:     "dateFrom > dateTo",
 			dateFrom: time.Date(2024, 6, 20, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 6, 19, 0, 0, 0, 0, time.UTC),
-			expSum:   0,
+			expSum:   decimal.NewFromFloat(0),
 		},
 		{
 			name:     "dateFrom и dateTo левее всех продаж",
 			dateFrom: time.Date(2024, 4, 29, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 4, 30, 0, 0, 0, 0, time.UTC),
-			expSum:   0,
+			expSum:   decimal.NewFromFloat(0),
 		},
 		{
 			name:     "dateFrom левее всех продаж, dateTo попадает на первую продажу",
 			dateFrom: time.Date(2024, 4, 30, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC),
-			expSum:   1,
+			expSum:   decimal.NewFromFloat(1),
 		},
 		{
 			name:     "dateFrom левее всех продаж, dateTo попадает на первую продажу",
 			dateFrom: time.Date(2024, 4, 30, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC),
-			expSum:   1,
+			expSum:   decimal.NewFromFloat(1),
 		},
 		{
 			name:     "dateFrom левее всех продаж, dateTo попадает на вторую продажу",
 			dateFrom: time.Date(2024, 4, 30, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 5, 2, 0, 0, 0, 0, time.UTC),
-			expSum:   3,
+			expSum:   decimal.NewFromFloat(3),
 		},
 		{
 			name:     "dateFrom левее всех продаж, dateTo попадает на последнюю продажу",
 			dateFrom: time.Date(2024, 4, 30, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 8, 6, 0, 0, 0, 0, time.UTC),
-			expSum:   4851,
+			expSum:   decimal.NewFromFloat(4851),
 		},
 		{
 			name:     "dateFrom левее всех продаж, dateTo правее последней продажи",
 			dateFrom: time.Date(2024, 4, 30, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 8, 7, 0, 0, 0, 0, time.UTC),
-			expSum:   4851,
+			expSum:   decimal.NewFromFloat(4851),
 		},
 		{
 			name:     "dateFrom на первой продаже, dateTo на первой продаже",
 			dateFrom: time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC),
-			expSum:   1,
+			expSum:   decimal.NewFromFloat(1),
 		},
 		{
 			name:     "dateFrom на первой продаже, dateTo на третьей продаже",
 			dateFrom: time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 5, 3, 0, 0, 0, 0, time.UTC),
-			expSum:   6,
+			expSum:   decimal.NewFromFloat(6),
 		},
 		{
 			name:     "dateFrom на предпоследней продаже, dateTo на последней продаже",
 			dateFrom: time.Date(2024, 8, 5, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 8, 6, 0, 0, 0, 0, time.UTC),
-			expSum:   195,
+			expSum:   decimal.NewFromFloat(195),
 		},
 		{
 			name:     "dateFrom на последней продаже, dateTo правее всех продаж",
 			dateFrom: time.Date(2024, 8, 6, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 8, 7, 0, 0, 0, 0, time.UTC),
-			expSum:   98,
+			expSum:   decimal.NewFromFloat(98),
 		},
 		{
 			name:     "dateFrom и dateTo правее всех продаж",
 			dateFrom: time.Date(2024, 8, 7, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 8, 8, 0, 0, 0, 0, time.UTC),
-			expSum:   0,
+			expSum:   decimal.NewFromFloat(0),
 		},
 		{
 			name:     "dateFrom на первой продаже, dateTo на последней продаже",
 			dateFrom: time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC),
 			dateTo:   time.Date(2024, 8, 6, 0, 0, 0, 0, time.UTC),
-			expSum:   4851,
+			expSum:   decimal.NewFromFloat(4851),
 		},
 	}
 
@@ -118,8 +119,8 @@ func TestSalesStorage_GetTotal(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			assert.Equal(t, tt.expSum, s.GetTotalSum("store_1", tt.dateFrom, tt.dateTo))
+			x := s.GetTotalSum("store_1", tt.dateFrom, tt.dateTo)
+			assert.Equal(t, tt.expSum, x)
 		})
 	}
 }
@@ -136,7 +137,7 @@ func TestSalesStorage_GetTotal_Performance(t *testing.T) {
 			StoreID:      "store_1",
 			ProductID:    fmt.Sprintf("product_%d", i),
 			QuantitySold: 1,
-			SalePrice:    float64(1 + i),
+			SalePrice:    decimal.NewFromFloat(1 + float64(i)),
 			SaleDate:     dateFrom.Add(time.Duration(i) * time.Second),
 		})
 
@@ -164,7 +165,7 @@ func TestSalesStorage_AddGetSale(t *testing.T) {
 		StoreID:      "store_1",
 		ProductID:    "product_1",
 		QuantitySold: 100,
-		SalePrice:    9.99,
+		SalePrice:    decimal.NewFromFloat(9.99),
 		SaleDate:     time.Date(2024, 6, 1, 10, 0, 0, 0, time.UTC),
 	}
 
@@ -172,7 +173,7 @@ func TestSalesStorage_AddGetSale(t *testing.T) {
 		StoreID:      "store_1",
 		ProductID:    "product_2",
 		QuantitySold: 100,
-		SalePrice:    29.99,
+		SalePrice:    decimal.NewFromFloat(29.99),
 		SaleDate:     time.Date(2024, 6, 2, 10, 0, 0, 0, time.UTC),
 	}
 

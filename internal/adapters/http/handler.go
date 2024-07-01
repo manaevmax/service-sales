@@ -60,9 +60,6 @@ func (h *SalesHandler) CalculateTotalSum(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	if req.StartDate == "" && req.EndDate == "" {
-
-	}
 	startDate, err := time.Parse(time.RFC3339, req.StartDate)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())

@@ -9,6 +9,7 @@ import (
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
+	decimal "github.com/shopspring/decimal"
 	domain "go.dataflow.ru/service-sales/internal/app/domain"
 )
 
@@ -62,10 +63,10 @@ func (mr *MockSalesStorageMockRecorder) GetSales() *gomock.Call {
 }
 
 // GetTotalSum mocks base method.
-func (m *MockSalesStorage) GetTotalSum(storeID string, startDate, endDate time.Time) float64 {
+func (m *MockSalesStorage) GetTotalSum(storeID string, startDate, endDate time.Time) decimal.Decimal {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTotalSum", storeID, startDate, endDate)
-	ret0, _ := ret[0].(float64)
+	ret0, _ := ret[0].(decimal.Decimal)
 	return ret0
 }
 

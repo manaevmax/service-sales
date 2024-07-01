@@ -4,6 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/shopspring/decimal"
+
 	"go.dataflow.ru/service-sales/internal/app/domain"
 	"go.dataflow.ru/service-sales/pkg/logger"
 )
@@ -16,7 +18,7 @@ const (
 // SaleExt определяет тип для продаж, расширенный кумулятивной суммой продаж.
 type SaleExt struct {
 	*domain.Sale
-	CumulativeSum float64
+	CumulativeSum decimal.Decimal
 }
 
 // SalesStorage хранилище для работы с продажами.
@@ -61,12 +63,12 @@ func (s *SalesStorage) AddSale(sale *domain.Sale) {
 	}
 
 	// считаем кумулятивную сумму продаж для текущей продажи
-	cumulativeSum := 0.0
+	cumulativeSum := decimal.NewFromFloat(0)
 	if len(sales) > 0 {
 		cumulativeSum = sales[len(sales)-1].CumulativeSum
 	}
 
-	cumulativeSum += float64(sale.QuantitySold) * sale.SalePrice
+	cumulativeSum = cumulativeSum.Add(decimal.NewFromInt(sale.QuantitySold).Mul(sale.SalePrice))
 
 	// сохраняем информацию о продаже и кумулятивной сумме продаж
 	s.salesByStore[sale.StoreID] = append(s.salesByStore[sale.StoreID], SaleExt{
@@ -97,30 +99,30 @@ func (s *SalesStorage) GetSales() []*domain.Sale {
 }
 
 // GetTotalSum возвращает сумму продаж магазина за период.
-func (s *SalesStorage) GetTotalSum(storeID string, startDate, endDate time.Time) float64 {
+func (s *SalesStorage) GetTotalSum(storeID string, startDate, endDate time.Time) decimal.Decimal {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	sales := s.salesByStore[storeID]
 
 	if startDate.After(endDate) || len(sales) == 0 {
-		return 0
+		return decimal.NewFromFloat(0)
 	}
 
 	// обрабатываем корнер-кейсы, когда запрошенный диапазон не пересекается с периодом, за который есть продажи
 	if sales[0].SaleDate.After(endDate) {
-		return 0
+		return decimal.NewFromFloat(0)
 	}
 
 	if sales[len(sales)-1].SaleDate.Before(startDate) {
-		return 0
+		return decimal.NewFromFloat(0)
 	}
 
 	// считаем сумму продаж за период
 	firstSaleIdx := s.findSaleIdx(storeID, startDate)
 	lastSaleIdx := s.findSaleIdx(storeID, endDate)
 
-	firstSaleCumulativeSum := 0.0
+	firstSaleCumulativeSum := decimal.NewFromFloat(0)
 	if firstSaleIdx > 0 {
 		firstSaleCumulativeSum = sales[firstSaleIdx-1].CumulativeSum
 	}
@@ -130,7 +132,7 @@ func (s *SalesStorage) GetTotalSum(storeID string, startDate, endDate time.Time)
 		lastSaleCumulativeSum = sales[lastSaleIdx].CumulativeSum
 	}
 
-	return lastSaleCumulativeSum - firstSaleCumulativeSum
+	return lastSaleCumulativeSum.Sub(firstSaleCumulativeSum)
 }
 
 // findSaleIdx возвращает индекс продажи, ближайшей справа на временной оси к заданному времени dt.
@@ -172,16 +174,15 @@ func (s *SalesStorage) findGranuleHeadIdx(storeID string, dt time.Time) int64 {
 }
 
 // GetTotalSumSimple возвращает сумму продаж магазина за период простым перебором (для сравнения).
-func (s *SalesStorage) GetTotalSumSimple(storeID string, startDate, endDate time.Time) float64 {
+func (s *SalesStorage) GetTotalSumSimple(storeID string, startDate, endDate time.Time) decimal.Decimal {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	sum := 0.0
+	sum := decimal.NewFromFloat(0)
 
 	for _, sale := range s.salesByStore[storeID] {
-		if (sale.SaleDate.After(startDate) || sale.SaleDate == startDate) &&
-			(sale.SaleDate.Before(endDate) || sale.SaleDate == endDate) {
-			sum += float64(sale.QuantitySold) * sale.SalePrice
+		if (sale.SaleDate.After(startDate) || sale.SaleDate == startDate) && (sale.SaleDate.Before(endDate) || sale.SaleDate == endDate) {
+			sum = sum.Add(decimal.NewFromInt(sale.QuantitySold).Mul(sale.SalePrice))
 		}
 	}
 

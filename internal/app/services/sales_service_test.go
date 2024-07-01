@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"go.dataflow.ru/service-sales/pkg/logger"
 
@@ -22,7 +23,7 @@ func TestService_AddSale(t *testing.T) {
 		ProductID:    "product_100",
 		StoreID:      "store_1",
 		QuantitySold: 10,
-		SalePrice:    199,
+		SalePrice:    decimal.NewFromFloat(199),
 		SaleDate:     time.Date(2024, 6, 20, 10, 0, 0, 0, time.UTC),
 	}
 
@@ -48,7 +49,7 @@ func TestService_AddSale(t *testing.T) {
 				ProductID:    "product_100",
 				StoreID:      "store_1",
 				QuantitySold: -10,
-				SalePrice:    199,
+				SalePrice:    decimal.NewFromFloat(199),
 				SaleDate:     time.Date(2024, 6, 20, 10, 0, 0, 0, time.UTC),
 			},
 			storage: func() ports.SalesStorage {
@@ -62,7 +63,7 @@ func TestService_AddSale(t *testing.T) {
 				ProductID:    "product_100",
 				StoreID:      "store_1",
 				QuantitySold: 10,
-				SalePrice:    -199,
+				SalePrice:    decimal.NewFromFloat(-199),
 				SaleDate:     time.Date(2024, 6, 20, 10, 0, 0, 0, time.UTC),
 			},
 			storage: func() ports.SalesStorage {
@@ -100,14 +101,14 @@ func TestService_GetSales(t *testing.T) {
 			ProductID:    "product_100",
 			StoreID:      "store_1",
 			QuantitySold: 10,
-			SalePrice:    199,
+			SalePrice:    decimal.NewFromFloat(199),
 			SaleDate:     time.Date(2024, 6, 20, 10, 0, 0, 0, time.UTC),
 		},
 		{
 			ProductID:    "product_101",
 			StoreID:      "store_1",
 			QuantitySold: 10,
-			SalePrice:    199,
+			SalePrice:    decimal.NewFromFloat(199),
 			SaleDate:     time.Date(2024, 6, 20, 10, 10, 0, 0, time.UTC),
 		},
 	}
@@ -128,7 +129,7 @@ func TestService_GetTotalSum(t *testing.T) {
 	storeID := "store_1"
 	dateFrom := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
 	dateTo := time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC)
-	total := 1001.9
+	total := decimal.NewFromFloat(1001.9)
 
 	storage.EXPECT().GetTotalSum(storeID, dateFrom, dateTo).Return(total)
 

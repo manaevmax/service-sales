@@ -21,6 +21,7 @@ linters:
     - varnamelen
     - testpackage
     - goerr113
+    - exhaustivestruct
 
 linters-settings:
   gosec:

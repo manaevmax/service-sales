@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/shopspring/decimal"
+
 	"go.dataflow.ru/service-sales/internal/app/domain"
 	"go.dataflow.ru/service-sales/internal/app/ports"
 	"go.dataflow.ru/service-sales/pkg/logger"
@@ -24,7 +26,7 @@ func NewSaleService(storage ports.SalesStorage, logger *logger.Logger) *SalesSer
 }
 
 func (s *SalesService) AddSale(sale *domain.Sale) error {
-	if sale.SalePrice < 0 {
+	if sale.SalePrice.IsNegative() {
 		return fmt.Errorf("invalid sale price")
 	}
 
@@ -41,6 +43,6 @@ func (s *SalesService) GetSales() []*domain.Sale {
 	return s.storage.GetSales()
 }
 
-func (s *SalesService) GetTotalSum(storeID string, startDate, endDate time.Time) float64 {
+func (s *SalesService) GetTotalSum(storeID string, startDate, endDate time.Time) decimal.Decimal {
 	return s.storage.GetTotalSum(storeID, startDate, endDate)
 }
